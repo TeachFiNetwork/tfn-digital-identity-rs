@@ -9,3 +9,4 @@ pub static ERROR_VALUE_NOT_FOUND: &[u8] = b"value not found";
 pub static ERROR_ALREADY_MODIFIER: &[u8] = b"already modifier";
 pub static ERROR_NOT_MODIFIER: &[u8] = b"not a modifier";
 pub static ERROR_EMPTY_VALUE: &[u8] = b"empty value";
+pub static ERROR_REQUEST_NOT_FOUND: &[u8] = b"request not found";

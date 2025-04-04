@@ -40,6 +40,25 @@ pub struct IdentityLink<M: ManagedTypeApi> {
     pub relation: ManagedBuffer<M>,
 }
 
+#[type_abi]
+#[derive(ManagedVecItem, TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Eq, Clone, Debug)]
+pub struct LinkRequest<M: ManagedTypeApi> {
+    pub id: u64,
+    pub parent_id: u64,
+    pub child_id: u64,
+    pub relation: ManagedBuffer<M>,
+    pub keys: ManagedVec<M, ManagedBuffer<M>>,
+}
+
+#[type_abi]
+#[derive(ManagedVecItem, TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Eq, Clone, Debug)]
+pub struct UnlinkRequest<M: ManagedTypeApi> {
+    pub id: u64,
+    pub parent_id: u64,
+    pub child_id: u64,
+    pub reason: ManagedBuffer<M>,
+}
+
 #[multiversx_sc::module]
 pub trait ConfigModule {
     // state
@@ -101,6 +120,23 @@ pub trait ConfigModule {
     #[view(getParentLinks)]
     #[storage_mapper("parent_links")]
     fn parent_links(&self, parent_id: u64) -> UnorderedSetMapper<u64>;
+
+    // requests
+    #[view(getLinkRequest)]
+    #[storage_mapper("link_requests")]
+    fn link_requests(&self, request_id: u64) -> SingleValueMapper<LinkRequest<Self::Api>>;
+
+    #[view(getLastListRequestId)]
+    #[storage_mapper("last_link_request_id")]
+    fn last_link_request_id(&self) -> SingleValueMapper<u64>;
+
+    #[view(getUnLinkRequest)]
+    #[storage_mapper("unlink_requests")]
+    fn unlink_requests(&self, request_id: u64) -> SingleValueMapper<UnlinkRequest<Self::Api>>;
+
+    #[view(getLastUnLinkRequestId)]
+    #[storage_mapper("last_unlink_request_id")]
+    fn last_unlink_request_id(&self) -> SingleValueMapper<u64>;
 
     // views
     #[view(getIdentityByWallet)]
@@ -173,6 +209,18 @@ pub trait ConfigModule {
         parents
     }
 
+    #[view(getLinkByIds)]
+    fn get_link_by_ids(&self, parent_id: u64, child_id: u64) -> Option<IdentityLink<Self::Api>> {
+        for link_id in self.child_links(child_id).iter() {
+            let link = self.identity_links(link_id).get();
+            if link.parent_id == parent_id {
+                return Some(link);
+            }
+        }
+
+        None
+    }
+
     #[view(getLinkedIdentities)]
     fn get_linked_identities(&self, identity_id: u64) -> MultiValueEncoded<Self::Api, (Identity<Self::Api>, IdentityLink<Self::Api>)> {
         let mut linked_identities = MultiValueEncoded::new();
@@ -212,5 +260,120 @@ pub trait ConfigModule {
         }
 
         false
+    }
+
+    #[view(getChildrenWithSameLastValue)]
+    fn get_children_with_same_last_value(
+        &self,
+        parent_id: u64,
+        key: ManagedBuffer,
+        last_value: ManagedBuffer,
+        opt_relation: OptionalValue<ManagedBuffer>,
+    ) -> ManagedVec<Identity<Self::Api>> {
+        let mut children = ManagedVec::new();
+        let (all, relation) = match opt_relation {
+            OptionalValue::Some(r) => (false, r),
+            OptionalValue::None => (true, ManagedBuffer::new()),
+        };
+        for link_id in self.parent_links(parent_id).iter() {
+            let link = self.identity_links(link_id).get();
+            if !all && relation != link.relation {
+                continue
+            }
+
+            let child = self.identities(link.child_id).get();
+            let last_id = self.last_identity_key_id(child.id, &key).get();
+            if last_id == 0 {
+                continue;
+            }
+
+            let value = self.identity_key_value(child.id, &key, last_id - 1).get();
+            if value.value == last_value {
+                children.push(child);
+            }
+        }
+
+        children
+    }
+
+    #[view(getMultipleIdentities)]
+    fn get_multiple_identities(&self, identity_ids: ManagedVec<u64>) -> ManagedVec<Identity<Self::Api>> {
+        let mut identities = ManagedVec::new();
+        for id in identity_ids.into_iter() {
+            if !self.identities(id).is_empty() {
+                identities.push(self.identities(id).get());
+            }
+        }
+
+        identities
+    }
+
+    // requests
+    #[view(getLinkRequestsByParent)]
+    fn get_link_requests_by_parent(&self, parent_id: u64) -> ManagedVec<LinkRequest<Self::Api>> {
+        let mut requests = ManagedVec::new();
+        for request_id in 0..self.last_link_request_id().get() {
+            if self.link_requests(request_id).is_empty() {
+                continue;
+            }
+
+            let request = self.link_requests(request_id).get();
+            if request.parent_id == parent_id {
+                requests.push(request);
+            }
+        }
+
+        requests
+    }
+
+    #[view(getLinkRequestsByChild)]
+    fn get_link_requests_by_child(&self, child_id: u64) -> ManagedVec<LinkRequest<Self::Api>> {
+        let mut requests = ManagedVec::new();
+        for request_id in 0..self.last_link_request_id().get() {
+            if self.link_requests(request_id).is_empty() {
+                continue;
+            }
+
+            let request = self.link_requests(request_id).get();
+            if request.child_id == child_id {
+                requests.push(request);
+            }
+        }
+
+        requests
+    }
+
+    #[view(getUnlinkRequestsByParent)]
+    fn get_unlink_requests_by_parent(&self, parent_id: u64) -> ManagedVec<UnlinkRequest<Self::Api>> {
+        let mut requests = ManagedVec::new();
+        for request_id in 0..self.last_unlink_request_id().get() {
+            if self.unlink_requests(request_id).is_empty() {
+                continue;
+            }
+
+            let request = self.unlink_requests(request_id).get();
+            if request.parent_id == parent_id {
+                requests.push(request);
+            }
+        }
+
+        requests
+    }
+
+    #[view(getUnlinkRequestsByChild)]
+    fn get_unlink_requests_by_child(&self, child_id: u64) -> ManagedVec<UnlinkRequest<Self::Api>> {
+        let mut requests = ManagedVec::new();
+        for request_id in 0..self.last_unlink_request_id().get() {
+            if self.unlink_requests(request_id).is_empty() {
+                continue;
+            }
+
+            let request = self.unlink_requests(request_id).get();
+            if request.child_id == child_id {
+                requests.push(request);
+            }
+        }
+
+        requests
     }
 }
