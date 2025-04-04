@@ -15,9 +15,10 @@ pub struct Identity<M: ManagedTypeApi> {
     pub is_corporate: bool,
     pub legal_id: BigUint<M>, // CNP
     pub birthdate: u64,
-    pub wallet: ManagedAddress<M>,
+    pub address: ManagedAddress<M>,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
+    pub image: ManagedBuffer<M>,
     pub contact: ManagedVec<M, ManagedBuffer<M>>,
 }
 
@@ -110,7 +111,7 @@ pub trait ConfigModule {
             }
 
             let identity = self.identities(id).get();
-            if &identity.wallet == wallet {
+            if &identity.address == wallet {
                 return Some(identity);
             }
         }

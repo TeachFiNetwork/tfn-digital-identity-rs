@@ -24,13 +24,14 @@ common::config::ConfigModule
         is_corporate: bool,
         legal_id: BigUint,
         birthdate: u64,
-        wallet: ManagedAddress,
+        address: ManagedAddress,
         name: ManagedBuffer,
         description: ManagedBuffer,
+        image: ManagedBuffer,
         contact: ManagedVec<ManagedBuffer>,
     ) -> u64 {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
-        require!(self.get_identity_by_wallet(&wallet).is_none(), ERROR_WALLET_ALREADY_REGISTERED);
+        require!(self.get_identity_by_wallet(&address).is_none(), ERROR_WALLET_ALREADY_REGISTERED);
         require!(self.get_identity_by_legal_id(&legal_id).is_none(), ERROR_LEGAL_ID_ALREADY_REGISTERED);
 
         let id = self.last_identity_id().get();
@@ -39,9 +40,10 @@ common::config::ConfigModule
             is_corporate,
             legal_id,
             birthdate,
-            wallet,
+            address,
             name,
             description,
+            image,
             contact,
         };
         self.identities(identity.id).set(&identity);
@@ -56,17 +58,18 @@ common::config::ConfigModule
         self.only_owner_or_wallet(new_identity.id);
 
         let mut old_identity = self.identities(new_identity.id).get();
-        if self.blockchain().get_caller() == self.blockchain().get_owner_address() {
-            old_identity.wallet = new_identity.wallet;
+        if self.blockchain().get_caller() == self.blockchain().get_owner_address() || !self.has_links(new_identity.id) {
+            old_identity.address = new_identity.address;
         }
         self.identities(new_identity.id).set(Identity{
             id: new_identity.id,
             is_corporate: new_identity.is_corporate,
             legal_id: new_identity.legal_id,
             birthdate: new_identity.birthdate,
-            wallet: old_identity.wallet,
+            address: old_identity.address,
             name: new_identity.name,
             description: new_identity.description,
+            image: new_identity.image,
             contact: new_identity.contact,
         });
     }
@@ -76,10 +79,9 @@ common::config::ConfigModule
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
         self.only_owner_or_wallet(identity_id);
 
-        let mut links = self.get_children_identities(identity_id);
-        links.append_vec(self.get_parent_identities(identity_id));
-
-        require!(links.is_empty(), ERROR_NOT_ALLOWED);
+        require!(!self.has_links(identity_id), ERROR_NOT_ALLOWED);
+        // let mut links = self.get_children_identities(identity_id);
+        // links.append_vec(self.get_parent_identities(identity_id));
         // for link in links.iter() {
         //     self.remove_identity_link(link.id);
         // }
@@ -115,7 +117,7 @@ common::config::ConfigModule
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
         let parent_identity = self.identities(parent_id).get();
-        require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
+        require!(caller == owner || caller == parent_identity.address, ERROR_NOT_ALLOWED);
 
         let link_id = self.last_identity_link_id().get();
         let link = IdentityLink {
@@ -131,7 +133,7 @@ common::config::ConfigModule
 
         if keys.is_some() {
             for key in keys.into_option().unwrap().into_iter() {
-                self.add_modifier(child_id, &key, OptionalValue::Some(parent_identity.wallet.clone()));
+                self.add_modifier(child_id, &key, OptionalValue::Some(parent_identity.address.clone()));
             }
         }
 
@@ -147,7 +149,7 @@ common::config::ConfigModule
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
         let parent_identity = self.identities(link.parent_id).get();
-        require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
+        require!(caller == owner || caller == parent_identity.address, ERROR_NOT_ALLOWED);
 
         self.child_links(link.child_id).swap_remove(&link.id);
         self.parent_links(link.parent_id).swap_remove(&link.id);
@@ -283,6 +285,13 @@ common::config::ConfigModule
     }
 
     // helpers
+    fn has_links(&self, identity_id: u64) -> bool {
+        let mut links = self.get_children_identities(identity_id);
+        links.append_vec(self.get_parent_identities(identity_id));
+
+        !links.is_empty()
+    }
+
     fn only_modifier(&self, identity_id: u64, key: &ManagedBuffer) {
         require!(!self.identities(identity_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
@@ -297,6 +306,6 @@ common::config::ConfigModule
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
         let identity = self.identities(identity_id).get();
-        require!(caller == owner || caller == identity.wallet, ERROR_NOT_ALLOWED);
+        require!(caller == owner || caller == identity.address, ERROR_NOT_ALLOWED);
     }
 }
