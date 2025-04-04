@@ -31,7 +31,7 @@ common::config::ConfigModule
         contact: ManagedVec<ManagedBuffer>,
     ) -> u64 {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
-        require!(self.get_identity_by_wallet(&address).is_none(), ERROR_WALLET_ALREADY_REGISTERED);
+        require!(self.get_identity_by_address(&address).is_none(), ERROR_WALLET_ALREADY_REGISTERED);
         require!(self.get_identity_by_legal_id(&legal_id).is_none(), ERROR_LEGAL_ID_ALREADY_REGISTERED);
 
         let id = self.last_identity_id().get();
@@ -330,7 +330,7 @@ common::config::ConfigModule
 
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
-        let is_parent = match self.get_identity_by_wallet(&caller) {
+        let is_parent = match self.get_identity_by_address(&caller) {
             Some(parent) => self.is_parent_of(parent.id, identity_id),
             None => false,
         };

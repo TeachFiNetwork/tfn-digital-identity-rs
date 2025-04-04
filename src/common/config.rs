@@ -139,8 +139,8 @@ pub trait ConfigModule {
     fn last_unlink_request_id(&self) -> SingleValueMapper<u64>;
 
     // views
-    #[view(getIdentityByWallet)]
-    fn get_identity_by_wallet(&self, wallet: &ManagedAddress) -> Option<Identity<Self::Api>> {
+    #[view(getIdentityByAddress)]
+    fn get_identity_by_address(&self, wallet: &ManagedAddress) -> Option<Identity<Self::Api>> {
         for id in 0..self.last_identity_id().get() {
             if self.identities(id).is_empty() {
                 continue;
@@ -306,6 +306,16 @@ pub trait ConfigModule {
         }
 
         identities
+    }
+
+    #[view(getLastValueOfKey)]
+    fn get_last_value_of_key(&self, identity_id: u64, key: &ManagedBuffer) -> Option<Value<Self::Api>> {
+        let last_id = self.last_identity_key_id(identity_id, key).get();
+        if last_id == 0 {
+            return None;
+        }
+
+        Some(self.identity_key_value(identity_id, key, last_id - 1).get())
     }
 
     // requests
