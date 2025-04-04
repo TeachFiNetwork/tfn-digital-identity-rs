@@ -5,3 +5,6 @@ pub static ERROR_IDENTITY_NOT_FOUND: &[u8] = b"identity not found";
 pub static ERROR_NOT_ALLOWED: &[u8] = b"not allowed";
 pub static ERROR_KEY_NOT_FOUND: &[u8] = b"key not found";
 pub static ERROR_VALUE_NOT_FOUND: &[u8] = b"value not found";
+pub static ERROR_ALREADY_MODIFIER: &[u8] = b"already modifier";
+pub static ERROR_NOT_MODIFIER: &[u8] = b"not a modifier";
+pub static ERROR_EMPTY_KEY: &[u8] = b"empty key";

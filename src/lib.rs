@@ -142,20 +142,56 @@ common::config::ConfigModule
         }
     }
 
-    #[only_owner]
     #[endpoint(addModifier)]
-    fn add_modifier(&self, identity_id: u64, key: &ManagedBuffer, modifier: ManagedAddress) {
+    fn add_modifier(
+        &self,
+        identity_id: u64,
+        key: &ManagedBuffer,
+        opt_modifier: OptionalValue<ManagedAddress>,
+    ) {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
+        require!(!key.is_empty(), ERROR_EMPTY_KEY);
         require!(!self.identities(identity_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
+        let modifier = match opt_modifier {
+            OptionalValue::Some(modifier) => modifier,
+            OptionalValue::None => self.blockchain().get_caller(),
+        };
+        require!(!self.identity_key_modifiers(identity_id, key).contains(&modifier), ERROR_ALREADY_MODIFIER);
+
+        let owner = self.blockchain().get_owner_address();
+        let caller = self.blockchain().get_caller();
+        let is_parent = match self.get_identity_by_wallet(&caller) {
+            Some(parent_id) => self.is_parent_of(parent_id, identity_id),
+            None => false,
+        };
+        require!(caller == owner || is_parent, ERROR_NOT_ALLOWED);
+
+        if !self.identity_key_modifiers(identity_id, key).is_empty() {
+            require!(caller == owner, ERROR_NOT_ALLOWED);
+        }
         self.identity_key_modifiers(identity_id, key).insert(modifier);
     }
 
-    #[only_owner]
     #[endpoint(removeModifier)]
-    fn remove_modifier(&self, identity_id: u64, key: &ManagedBuffer, modifier: ManagedAddress) {
+    fn remove_modifier(
+        &self,
+        identity_id: u64,
+        key: &ManagedBuffer,
+        opt_modifier: OptionalValue<ManagedAddress>,
+    ) {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
         require!(!self.identities(identity_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
+
+        let modifier = match opt_modifier {
+            OptionalValue::Some(modifier) => modifier,
+            OptionalValue::None => self.blockchain().get_caller(),
+        };
+        require!(self.identity_key_modifiers(identity_id, key).contains(&modifier), ERROR_NOT_MODIFIER);
+
+        let owner = self.blockchain().get_owner_address();
+        let caller = self.blockchain().get_caller();
+        require!(caller == owner || caller == modifier, ERROR_NOT_ALLOWED);
 
         self.identity_key_modifiers(identity_id, key).swap_remove(&modifier);
     }

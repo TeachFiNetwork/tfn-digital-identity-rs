@@ -171,4 +171,16 @@ pub trait ConfigModule {
 
         parents
     }
+
+    #[view(isParentOf)]
+    fn is_parent_of(&self, parent_id: u64, child_id: u64) -> bool {
+        for link_id in self.children_links(child_id).iter() {
+            let link = self.identity_links(link_id).get();
+            if link.parent_id == parent_id {
+                return true;
+            }
+        }
+
+        false
+    }
 }
