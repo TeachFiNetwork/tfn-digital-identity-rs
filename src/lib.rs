@@ -39,7 +39,6 @@ common::config::ConfigModule
             name,
             description,
             contact,
-            link_ids: ManagedVec::new(),
         };
         self.identities(identity.id).set(&identity);
         self.last_identity_id().set(id + 1);
@@ -61,7 +60,6 @@ common::config::ConfigModule
             name: new_identity.name,
             description: new_identity.description,
             contact: new_identity.contact,
-            link_ids: old_identity.link_ids, // read only
         });
     }
 
@@ -100,9 +98,11 @@ common::config::ConfigModule
 
         let caller = self.blockchain().get_caller();
         let parent_id = match self.get_identity_by_wallet(&caller) {
-            Some(identity) => identity,
+            Some(identity) => identity.id,
             None => { sc_panic!(ERROR_IDENTITY_NOT_FOUND); }
         };
+        require!(child_id != parent_id, ERROR_NOT_ALLOWED);
+
         let owner = self.blockchain().get_owner_address();
         let parent_identity = self.identities(parent_id).get();
         require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
@@ -116,7 +116,7 @@ common::config::ConfigModule
         };
         self.identity_links(link_id).set(&link);
         self.last_identity_link_id().set(link_id + 1);
-        self.children_links(child_id).insert(link_id);
+        self.child_links(child_id).insert(link_id);
         self.parent_links(parent_id).insert(link_id);
 
         link_id
@@ -134,7 +134,7 @@ common::config::ConfigModule
         let child_identity = self.identities(link.child_id).get();
         require!(caller == owner || caller == parent_identity.wallet || caller == child_identity.wallet, ERROR_NOT_ALLOWED);
 
-        self.children_links(link.child_id).swap_remove(&link.id);
+        self.child_links(link.child_id).swap_remove(&link.id);
         self.parent_links(link.parent_id).swap_remove(&link.id);
         self.identity_links(link.id).clear();
         if link.id == self.last_identity_link_id().get() - 1 {
@@ -162,7 +162,7 @@ common::config::ConfigModule
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
         let is_parent = match self.get_identity_by_wallet(&caller) {
-            Some(parent_id) => self.is_parent_of(parent_id, identity_id),
+            Some(parent) => self.is_parent_of(parent.id, identity_id),
             None => false,
         };
         require!(caller == owner || is_parent, ERROR_NOT_ALLOWED);
