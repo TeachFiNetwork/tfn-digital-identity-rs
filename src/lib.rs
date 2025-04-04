@@ -103,7 +103,9 @@ common::config::ConfigModule
             Some(identity) => identity,
             None => { sc_panic!(ERROR_IDENTITY_NOT_FOUND); }
         };
-        self.only_owner_or_parent(parent_id);
+        let owner = self.blockchain().get_owner_address();
+        let parent_identity = self.identities(parent_id).get();
+        require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
 
         let link_id = self.last_identity_link_id().get();
         let link = IdentityLink {
@@ -126,7 +128,11 @@ common::config::ConfigModule
         require!(!self.identity_links(link_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
         let link = self.identity_links(link_id).get();
-        self.only_owner_or_parent(link.parent_id);
+        let owner = self.blockchain().get_owner_address();
+        let caller = self.blockchain().get_caller();
+        let parent_identity = self.identities(link.parent_id).get();
+        let child_identity = self.identities(link.child_id).get();
+        require!(caller == owner || caller == parent_identity.wallet || caller == child_identity.wallet, ERROR_NOT_ALLOWED);
 
         self.children_links(link.child_id).swap_remove(&link.id);
         self.parent_links(link.parent_id).swap_remove(&link.id);
@@ -218,15 +224,6 @@ common::config::ConfigModule
     }
 
     // helpers
-    fn only_owner_or_parent(&self, parent_id: u64) {
-        require!(!self.identities(parent_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
-
-        let owner = self.blockchain().get_owner_address();
-        let caller = self.blockchain().get_caller();
-        let parent_identity = self.identities(parent_id).get();
-        require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
-    }
-
     fn only_modifier(&self, identity_id: u64, key: &ManagedBuffer) {
         require!(!self.identities(identity_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
