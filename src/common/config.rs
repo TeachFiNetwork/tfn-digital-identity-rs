@@ -14,6 +14,7 @@ pub struct Identity<M: ManagedTypeApi> {
     pub id: u64,
     pub is_corporate: bool,
     pub legal_id: BigUint<M>, // CNP
+    pub birthdate: u64,
     pub wallet: ManagedAddress<M>,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,

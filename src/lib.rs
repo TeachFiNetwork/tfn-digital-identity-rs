@@ -7,11 +7,13 @@ pub mod common;
 use common::{config::*, errors::*};
 
 #[multiversx_sc::contract]
-pub trait TFNDAOContract<ContractReader>:
+pub trait TFNDigitalIdentityContract<ContractReader>:
 common::config::ConfigModule
 {
     #[init]
-    fn init(&self) {}
+    fn init(&self) {
+        self.set_state_active();
+    }
 
     #[upgrade]
     fn upgrade(&self) {}
@@ -21,6 +23,7 @@ common::config::ConfigModule
         &self,
         is_corporate: bool,
         legal_id: BigUint,
+        birthdate: u64,
         wallet: ManagedAddress,
         name: ManagedBuffer,
         description: ManagedBuffer,
@@ -35,6 +38,7 @@ common::config::ConfigModule
             id,
             is_corporate,
             legal_id,
+            birthdate,
             wallet,
             name,
             description,
@@ -51,12 +55,16 @@ common::config::ConfigModule
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
         self.only_owner_or_wallet(new_identity.id);
 
-        let old_identity = self.identities(new_identity.id).get();
+        let mut old_identity = self.identities(new_identity.id).get();
+        if self.blockchain().get_caller() == self.blockchain().get_owner_address() {
+            old_identity.wallet = new_identity.wallet;
+        }
         self.identities(new_identity.id).set(Identity{
             id: new_identity.id,
-            is_corporate: old_identity.is_corporate, // read only
+            is_corporate: new_identity.is_corporate,
             legal_id: new_identity.legal_id,
-            wallet: new_identity.wallet,
+            birthdate: new_identity.birthdate,
+            wallet: old_identity.wallet,
             name: new_identity.name,
             description: new_identity.description,
             contact: new_identity.contact,
@@ -70,9 +78,12 @@ common::config::ConfigModule
 
         let mut links = self.get_children_identities(identity_id);
         links.append_vec(self.get_parent_identities(identity_id));
-        for link in links.iter() {
-            self.remove_identity_link(link.id);
-        }
+
+        require!(links.is_empty(), ERROR_NOT_ALLOWED);
+        // for link in links.iter() {
+        //     self.remove_identity_link(link.id);
+        // }
+
         for key in self.identity_keys(identity_id).iter() {
             for value_id in 0..self.last_identity_key_id(identity_id, &key).get() {
                 self.identity_key_value(identity_id, &key, value_id).clear();
@@ -90,20 +101,19 @@ common::config::ConfigModule
     #[endpoint(addIdentityLink)]
     fn add_identity_link(
         &self,
+        parent_id: u64,
         child_id: u64,
         relation: ManagedBuffer,
+        keys: OptionalValue<ManagedVec<ManagedBuffer>>,
     ) -> u64 {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
+        require!(child_id != parent_id, ERROR_NOT_ALLOWED);
+        require!(!relation.is_empty(), ERROR_EMPTY_VALUE);
+        require!(!self.identities(parent_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
         require!(!self.identities(child_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
-        let caller = self.blockchain().get_caller();
-        let parent_id = match self.get_identity_by_wallet(&caller) {
-            Some(identity) => identity.id,
-            None => { sc_panic!(ERROR_IDENTITY_NOT_FOUND); }
-        };
-        require!(child_id != parent_id, ERROR_NOT_ALLOWED);
-
         let owner = self.blockchain().get_owner_address();
+        let caller = self.blockchain().get_caller();
         let parent_identity = self.identities(parent_id).get();
         require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
 
@@ -119,20 +129,25 @@ common::config::ConfigModule
         self.child_links(child_id).insert(link_id);
         self.parent_links(parent_id).insert(link_id);
 
+        if keys.is_some() {
+            for key in keys.into_option().unwrap().into_iter() {
+                self.add_modifier(child_id, &key, OptionalValue::Some(parent_identity.wallet.clone()));
+            }
+        }
+
         link_id
     }
 
     #[endpoint(removeIdentityLink)]
     fn remove_identity_link(&self, link_id: u64) {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
-        require!(!self.identity_links(link_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
+        require!(!self.identity_links(link_id).is_empty(), ERROR_LINK_NOT_FOUND);
 
         let link = self.identity_links(link_id).get();
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
         let parent_identity = self.identities(link.parent_id).get();
-        let child_identity = self.identities(link.child_id).get();
-        require!(caller == owner || caller == parent_identity.wallet || caller == child_identity.wallet, ERROR_NOT_ALLOWED);
+        require!(caller == owner || caller == parent_identity.wallet, ERROR_NOT_ALLOWED);
 
         self.child_links(link.child_id).swap_remove(&link.id);
         self.parent_links(link.parent_id).swap_remove(&link.id);
@@ -150,14 +165,16 @@ common::config::ConfigModule
         opt_modifier: OptionalValue<ManagedAddress>,
     ) {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
-        require!(!key.is_empty(), ERROR_EMPTY_KEY);
+        require!(!key.is_empty(), ERROR_EMPTY_VALUE);
         require!(!self.identities(identity_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
         let modifier = match opt_modifier {
             OptionalValue::Some(modifier) => modifier,
             OptionalValue::None => self.blockchain().get_caller(),
         };
-        require!(!self.identity_key_modifiers(identity_id, key).contains(&modifier), ERROR_ALREADY_MODIFIER);
+        if self.identity_key_modifiers(identity_id, key).contains(&modifier) {
+            return
+        }
 
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
@@ -187,7 +204,9 @@ common::config::ConfigModule
             OptionalValue::Some(modifier) => modifier,
             OptionalValue::None => self.blockchain().get_caller(),
         };
-        require!(self.identity_key_modifiers(identity_id, key).contains(&modifier), ERROR_NOT_MODIFIER);
+        if !self.identity_key_modifiers(identity_id, key).contains(&modifier) {
+            return
+        }
 
         let owner = self.blockchain().get_owner_address();
         let caller = self.blockchain().get_caller();
@@ -233,10 +252,14 @@ common::config::ConfigModule
         require!(!self.identity_key_value(identity_id, &key, value_id).is_empty(), ERROR_VALUE_NOT_FOUND);
 
         let old_value = self.identity_key_value(identity_id, &key, value_id).get();
+        let owner = self.blockchain().get_owner_address();
+        let caller = self.blockchain().get_caller();
+        require!(caller == owner || caller == old_value.modifier, ERROR_NOT_ALLOWED);
+
         self.identity_key_value(identity_id, &key, value_id).set(Value{
             id: value_id,
             value: new_value,
-            modifier: self.blockchain().get_caller(),
+            modifier: old_value.modifier,
             timestamp: old_value.timestamp,
         });
     }
