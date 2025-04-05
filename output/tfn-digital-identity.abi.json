@@ -1,0 +1,980 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.85.0",
+            "commitHash": "4d91de4e48198da2e33413efdcd9cd2cc0c46688",
+            "commitDate": "2025-02-17",
+            "channel": "Stable",
+            "short": "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+        },
+        "contractCrate": {
+            "name": "tfn-digital-identity",
+            "version": "0.0.1"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.54.6"
+        }
+    },
+    "name": "TFNDigitalIdentityContract",
+    "constructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "newIdentity",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "is_corporate",
+                    "type": "bool"
+                },
+                {
+                    "name": "legal_id",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "birthdate",
+                    "type": "u64"
+                },
+                {
+                    "name": "address",
+                    "type": "Address"
+                },
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "image",
+                    "type": "bytes"
+                },
+                {
+                    "name": "contact",
+                    "type": "List<bytes>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "editIdentity",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "new_identity",
+                    "type": "Identity"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "removeIdentity",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "requestLink",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "relation",
+                    "type": "bytes"
+                },
+                {
+                    "name": "keys",
+                    "type": "optional<List<bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "deleteLinkRequest",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "request_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "acceptLink",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "request_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "requestUnlink",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "reason",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "deleteUnlinkRequest",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "request_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "acceptUnlink",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "request_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "removeIdentityLink",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "addModifier",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "opt_modifier",
+                    "type": "optional<Address>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "removeModifier",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "opt_modifier",
+                    "type": "optional<Address>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "addIdentityKeysValues",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "keys_values",
+                    "type": "variadic<tuple<bytes,bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "addIdentityKeyValue",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "value",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "editIdentityKeyValue",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "value_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "new_value",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "removeIdentityKeyValue",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "value_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setStateActive",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "setStateInactive",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "getState",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "State"
+                }
+            ]
+        },
+        {
+            "name": "getIdentity",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Identity"
+                }
+            ]
+        },
+        {
+            "name": "getLastIdentityId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getIdentityKeyModifiers",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getIdentityKeys",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<bytes>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getLastIdentityKeyId",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getIdentityKeyValue",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "value_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Value"
+                }
+            ]
+        },
+        {
+            "name": "getIdentityLink",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "link_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "IdentityLink"
+                }
+            ]
+        },
+        {
+            "name": "getLastIdentityLinkId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getChildrenLinks",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getParentLinks",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getLinkRequest",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "request_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "LinkRequest"
+                }
+            ]
+        },
+        {
+            "name": "getLastListRequestId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getUnLinkRequest",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "request_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "UnlinkRequest"
+                }
+            ]
+        },
+        {
+            "name": "getLastUnLinkRequestId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getIdentityByAddress",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "wallet",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Option<Identity>"
+                }
+            ]
+        },
+        {
+            "name": "getIdentityByLegalId",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "legal_id",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Option<Identity>"
+                }
+            ]
+        },
+        {
+            "name": "getIdentityKeyValues",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Value>"
+                }
+            ]
+        },
+        {
+            "name": "getChildrenIdentitiesOfParent",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Identity>"
+                }
+            ]
+        },
+        {
+            "name": "getParentIdentitiesOfChild",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Identity>"
+                }
+            ]
+        },
+        {
+            "name": "getLinkByIds",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Option<IdentityLink>"
+                }
+            ]
+        },
+        {
+            "name": "getLinkedIdentities",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<tuple<Identity,IdentityLink>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "isParentOfChild",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "isChildOfParent",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getChildrenWithSameLastValue",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                },
+                {
+                    "name": "last_value",
+                    "type": "bytes"
+                },
+                {
+                    "name": "opt_relation",
+                    "type": "optional<bytes>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Identity>"
+                }
+            ]
+        },
+        {
+            "name": "getMultipleIdentities",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_ids",
+                    "type": "List<u64>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Identity>"
+                }
+            ]
+        },
+        {
+            "name": "getLastValueOfKey",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "identity_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "key",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Option<Value>"
+                }
+            ]
+        },
+        {
+            "name": "getLinkRequestsByParent",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<LinkRequest>"
+                }
+            ]
+        },
+        {
+            "name": "getLinkRequestsByChild",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<LinkRequest>"
+                }
+            ]
+        },
+        {
+            "name": "getUnlinkRequestsByParent",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<UnlinkRequest>"
+                }
+            ]
+        },
+        {
+            "name": "getUnlinkRequestsByChild",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<UnlinkRequest>"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Identity": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
+                {
+                    "name": "is_corporate",
+                    "type": "bool"
+                },
+                {
+                    "name": "legal_id",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "birthdate",
+                    "type": "u64"
+                },
+                {
+                    "name": "address",
+                    "type": "Address"
+                },
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "image",
+                    "type": "bytes"
+                },
+                {
+                    "name": "contact",
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        "IdentityLink": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "relation",
+                    "type": "bytes"
+                }
+            ]
+        },
+        "LinkRequest": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "relation",
+                    "type": "bytes"
+                },
+                {
+                    "name": "keys",
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        "State": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Inactive",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Active",
+                    "discriminant": 1
+                }
+            ]
+        },
+        "UnlinkRequest": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
+                {
+                    "name": "parent_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "child_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "reason",
+                    "type": "bytes"
+                }
+            ]
+        },
+        "Value": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
+                {
+                    "name": "value",
+                    "type": "bytes"
+                },
+                {
+                    "name": "modifier",
+                    "type": "Address"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "u64"
+                }
+            ]
+        }
+    }
+}
