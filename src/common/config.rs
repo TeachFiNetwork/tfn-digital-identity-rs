@@ -92,7 +92,7 @@ pub trait ConfigModule {
     fn identity_key_modifiers(&self, identity_id: u64, key: &ManagedBuffer) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
 
     // keys and values
-    #[view(getIdentityKeys)]
+    #[view(getIdentityKey)]
     #[storage_mapper("identity_keys")]
     fn identity_keys(&self, identity_id: u64) -> UnorderedSetMapper<ManagedBuffer<Self::Api>>;
 
@@ -316,6 +316,20 @@ pub trait ConfigModule {
         }
 
         Some(self.identity_key_value(identity_id, key, last_id - 1).get())
+    }
+
+    #[view(getIdentityKeys)]
+    fn get_identity_keys(&self, identity_id: u64) -> ManagedVec<ManagedBuffer<Self::Api>> {
+        let mut keys = ManagedVec::new();
+        for key in self.identity_keys(identity_id).iter() {
+            if self.identity_keys(identity_id).is_empty() {
+                continue;
+            }
+
+            keys.push(key);
+        }
+
+        keys
     }
 
     // requests
