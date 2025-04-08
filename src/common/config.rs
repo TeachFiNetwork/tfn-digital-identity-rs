@@ -126,15 +126,15 @@ pub trait ConfigModule {
     #[storage_mapper("link_requests")]
     fn link_requests(&self, request_id: u64) -> SingleValueMapper<LinkRequest<Self::Api>>;
 
-    #[view(getLastListRequestId)]
+    #[view(getLastLinkRequestId)]
     #[storage_mapper("last_link_request_id")]
     fn last_link_request_id(&self) -> SingleValueMapper<u64>;
 
-    #[view(getUnLinkRequest)]
+    #[view(getUnlinkRequest)]
     #[storage_mapper("unlink_requests")]
     fn unlink_requests(&self, request_id: u64) -> SingleValueMapper<UnlinkRequest<Self::Api>>;
 
-    #[view(getLastUnLinkRequestId)]
+    #[view(getLastUnlinkRequestId)]
     #[storage_mapper("last_unlink_request_id")]
     fn last_unlink_request_id(&self) -> SingleValueMapper<u64>;
 

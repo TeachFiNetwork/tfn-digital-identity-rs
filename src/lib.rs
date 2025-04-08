@@ -58,7 +58,14 @@ common::config::ConfigModule
         self.only_owner_or_wallet(new_identity.id);
 
         let mut old_identity = self.identities(new_identity.id).get();
+        if old_identity.legal_id != new_identity.legal_id {
+            require!(self.get_identity_by_legal_id(&new_identity.legal_id).is_none(), ERROR_LEGAL_ID_ALREADY_REGISTERED);
+        }
         if self.blockchain().get_caller() == self.blockchain().get_owner_address() || !self.has_links(new_identity.id) {
+            if old_identity.address != new_identity.address {
+                require!(self.get_identity_by_address(&new_identity.address).is_none(), ERROR_WALLET_ALREADY_REGISTERED);
+            }
+
             old_identity.address = new_identity.address;
         }
         self.identities(new_identity.id).set(Identity{
@@ -106,7 +113,7 @@ common::config::ConfigModule
         parent_id: u64,
         child_id: u64,
         relation: ManagedBuffer,
-        keys: OptionalValue<ManagedVec<ManagedBuffer>>,
+        opt_keys: OptionalValue<ManagedVec<ManagedBuffer>>,
     ) -> u64 {
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
         require!(child_id != parent_id, ERROR_NOT_ALLOWED);
@@ -119,13 +126,18 @@ common::config::ConfigModule
         let parent_identity = self.identities(parent_id).get();
         require!(caller == owner || caller == parent_identity.address, ERROR_NOT_ALLOWED);
 
+        let keys = opt_keys.clone().into_option().unwrap_or_default();
+        for key in keys.into_iter() {
+            require!(self.identity_key_modifiers(child_id, &key).is_empty(), ERROR_NOT_ALLOWED);
+        }
+
         let request_id = self.last_identity_link_id().get();
         let request = LinkRequest{
             id: request_id,
             child_id,
             parent_id,
             relation,
-            keys: keys.into_option().unwrap_or_default(),
+            keys,
         };
         self.link_requests(request_id).set(&request);
         self.last_identity_link_id().set(request_id + 1);
@@ -158,7 +170,7 @@ common::config::ConfigModule
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
         require!(!self.link_requests(request_id).is_empty(), ERROR_REQUEST_NOT_FOUND);
 
-        let request = self.link_requests(request_id).get();
+        let request = self.link_requests(request_id).take();
         require!(!self.identities(request.child_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
         require!(!self.identities(request.parent_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 
@@ -250,7 +262,7 @@ common::config::ConfigModule
         require!(self.state().get() == State::Active, ERROR_NOT_ACTIVE);
         require!(!self.unlink_requests(request_id).is_empty(), ERROR_REQUEST_NOT_FOUND);
 
-        let request = self.unlink_requests(request_id).get();
+        let request = self.unlink_requests(request_id).take();
         require!(!self.identities(request.child_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
         require!(!self.identities(request.parent_id).is_empty(), ERROR_IDENTITY_NOT_FOUND);
 

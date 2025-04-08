@@ -108,7 +108,7 @@
                     "type": "bytes"
                 },
                 {
-                    "name": "keys",
+                    "name": "opt_keys",
                     "type": "optional<List<bytes>>",
                     "multi_arg": true
                 }
@@ -522,7 +522,7 @@
             ]
         },
         {
-            "name": "getLastListRequestId",
+            "name": "getLastLinkRequestId",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -532,7 +532,7 @@
             ]
         },
         {
-            "name": "getUnLinkRequest",
+            "name": "getUnlinkRequest",
             "mutability": "readonly",
             "inputs": [
                 {
@@ -547,7 +547,7 @@
             ]
         },
         {
-            "name": "getLastUnLinkRequestId",
+            "name": "getLastUnlinkRequestId",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
