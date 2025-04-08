@@ -279,7 +279,7 @@ getIdentityKeyModifiers(identity_id: u64, key: &ManagedBuffer) -> UnorderedSetMa
 <br/>
 
 ```rust
-getIdentityKeys(identity_id: u64) -> UnorderedSetMapper<ManagedBuffer>
+getIdentityKeys(identity_id: u64) -> ManagedVec<ManagedBuffer>
 ```
 >Returns the list of the storage keys of the specified `identity_id`.
 <br/>
