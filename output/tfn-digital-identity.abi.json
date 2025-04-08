@@ -752,6 +752,21 @@
             ]
         },
         {
+            "name": "getMultipleIdentitiesByAddresses",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "addresses",
+                    "type": "List<Address>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Identity>"
+                }
+            ]
+        },
+        {
             "name": "getLastValueOfKey",
             "mutability": "readonly",
             "inputs": [

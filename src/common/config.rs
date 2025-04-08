@@ -308,6 +308,19 @@ pub trait ConfigModule {
         identities
     }
 
+    #[view(getMultipleIdentitiesByAddresses)]
+    fn get_multiple_identities_by_addresses(&self, addresses: ManagedVec<ManagedAddress>) -> ManagedVec<Identity<Self::Api>> {
+        let mut identities = ManagedVec::new();
+        for address in addresses.into_iter() {
+            let identity = self.get_identity_by_address(&address);
+            if identity.is_some() {
+                identities.push(identity.unwrap());
+            }
+        }
+
+        identities
+    }
+
     #[view(getLastValueOfKey)]
     fn get_last_value_of_key(&self, identity_id: u64, key: &ManagedBuffer) -> Option<Value<Self::Api>> {
         let last_id = self.last_identity_key_id(identity_id, key).get();
