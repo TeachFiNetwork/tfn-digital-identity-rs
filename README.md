@@ -227,6 +227,26 @@ removeIdentityKeyValue(
 
 >[!NOTE]
 >Removes the specified `value_id` from the identity's (identity_id) storage.
+<b/>
+
+```rust
+setStateActive()
+```
+>[!IMPORTANT]
+*Requirements:* the caller must be the SC owner.
+
+>[!NOTE]
+>Sets the SC state as active.
+<br/>
+
+```rust
+setStateInactive()
+```
+>[!IMPORTANT]
+*Requirements:* the caller must be the SC owner.
+
+>[!NOTE]
+>Sets the SC state as inactive.
 
 <br/>
 
@@ -238,6 +258,193 @@ removeIdentityKeyValue(
 getState() -> State
 ```
 >Returns the state of the SC (Active or Inactive).
+<br/>
+
+```rust
+getIdentity(identity_id: u64) -> Identity
+```
+>Returns the Identity object corresponding to the `identity_id` parameter.
+<br/>
+
+```rust
+getLastIdentityId() -> u64
+```
+>Returns the `ID - 1` of the last registered identity.
+<br/>
+
+```rust
+getIdentityKeyModifiers(identity_id: u64, key: &ManagedBuffer) -> UnorderedSetMapper<ManagedAddress>
+```
+>Returns the list of allowed modifier addresses under the `key` of the specified `identity_id`.
+<br/>
+
+```rust
+getIdentityKeys(identity_id: u64) -> UnorderedSetMapper<ManagedBuffer>
+```
+>Returns the list of the storage keys of the specified `identity_id`.
+<br/>
+
+```rust
+getLastIdentityKeyId(identity_id: u64, key: &ManagedBuffer) -> u64
+```
+>Returns the `ID - 1` of the last registered value under the `key` of the specified `identity_id`.
+<br/>
+
+```rust
+getIdentityKeyValue(identity_id: u64, key: &ManagedBuffer, value_id: u64) -> Value
+```
+>Returns the Value object corresponding to the `identity_id`, `key` and `value_id` parameters.
+<br/>
+
+```rust
+getIdentityLink(link_id: u64) -> IdentityLink
+```
+>Returns the IdentityLink object corresponding to the `link_id` parameter.
+<br/>
+
+```rust
+getLastIdentityLinkId() -> u64
+```
+>Returns the `ID - 1` of the last registered identity link.
+<br/>
+
+```rust
+getChildrenLinks(child_id: u64) -> UnorderedSetMapper<u64>
+```
+>Returns the list of IDs of the links in which `child_id` is present.
+<br/>
+
+```rust
+getParentLinks(parent_id: u64) -> UnorderedSetMapper<u64>
+```
+>Returns the list of IDs of the links in which `parent_id` is present.
+<br/>
+
+```rust
+getLinkRequest(request_id: u64) -> LinkRequest
+```
+>Returns the LinkRequest object corresponding to the `request_id` parameter.
+<br/>
+
+```rust
+getLastLinkRequestId() -> u64
+```
+>Returns the `ID - 1` of the last registered link request.
+<br/>
+
+```rust
+getUnlinkRequest(request_id: u64) -> UnlinkRequest
+```
+>Returns the UnlinkRequest object corresponding to the `request_id` parameter.
+<br/>
+
+```rust
+getLastUnlinkRequestId() -> u64
+```
+>Returns the `ID - 1` of the last registered unlink request.
+<br/>
+
+```rust
+getIdentityByAddress(wallet: &ManagedAddress) -> Option<Identity>
+```
+>Returns Some(identity) if an identity with the specified wallet address is found and None otherwise.
+<br/>
+
+```rust
+getIdentityByLegalId(legal_id: BigUint) -> Option<Identity>
+```
+>Returns Some(identity) if an identity with the specified legal_id is found and None otherwise.
+<br/>
+
+```rust
+getIdentityKeyValues(identity_id: u64, key: &ManagedBuffer) -> ManagedVec<Value>
+```
+>Returns all the values under the specified `key` of `identity_id`.
+<br/>
+
+```rust
+getChildrenIdentitiesOfParent(parent_id: u64) -> ManagedVec<Identity>
+```
+>Returns all the identities that are linked to `parent_id` as children.
+<br/>
+
+```rust
+getParentIdentitiesOfChild(child_id: u64) -> ManagedVec<Identity>
+```
+>Returns all the identities that are linked to `child_id` as parents.
+<br/>
+
+```rust
+getLinkByIds(parent_id: u64, child_id: u64) -> Option<IdentityLink>
+```
+>Returns Some(identity_link) if a link is found between the specified `parent_id` and `child_id` and None otherwise.
+<br/>
+
+```rust
+getLinkedIdentities(identity_id: u64) -> MultiValueEncoded<(Identity, IdentityLink)>
+```
+>Returns a list containing, for each link of `identity_id`, the identity object (parent or child) and the identity link object.
+<br/>
+
+```rust
+isParentOfChild(parent_id: u64, child_id: u64) -> bool
+```
+>Returns true if `parent_id` has a link with `child_id` as parent and false otherwise.
+<br/>
+
+```rust
+isChildOfParent(child_id: u64, parent_id: u64) -> bool
+```
+>Returns true if `child_id` has a link with `parent_id` as child and false otherwise.
+<br/>
+
+```rust
+getChildrenWithSameLastValue(
+    parent_id: u64,
+    key: ManagedBuffer,
+    last_value: ManagedBuffer,
+    opt_relation: OptionalValue<ManagedBuffer>,
+) -> ManagedVec<Identity>
+```
+>Returns a list of children identities of the specified `parent_id` that, for the specified `key`, have the same `last_value`.
+>Example: useful for a school that has employees as children and a `job` key, for selecting all the teachers.
+>We look only at the last value because, if job is changed, you may want to add the new job instead of editing the old one, for the purpose of keeping a historical record of all the employee's jobs.
+<br/>
+
+```rust
+getMultipleIdentities(identity_ids: ManagedVec<u64>) -> ManagedVec<Identity>
+```
+>Returns a list of all identity objects corresponding to the IDs in the `identity_ids` list.
+<br/>
+
+```rust
+getLastValueOfKey(identity_id: u64, key: &ManagedBuffer) -> Option<Value>
+```
+>Returns Some(value) for the last value object recorded under the specified `key` in `identity_id`. If no value exists under key, None is returned.
+<br/>
+
+```rust
+getLinkRequestsByParent(parent_id: u64) -> ManagedVec<LinkRequest>
+```
+>Returns a list with all the link requests initiated by `parent_id`.
+<br/>
+
+```rust
+getLinkRequestsByChild(child_id: u64) -> ManagedVec<LinkRequest>
+```
+>Returns a list with all the link requests received by `child_id`.
+<br/>
+
+```rust
+getUnlinkRequestsByParent(parent_id: u64) -> ManagedVec<UnlinkRequest>
+```
+>Returns a list with all the unlink requests received by `parent_id`.
+<br/>
+
+```rust
+getUnlinkRequestsByChild(child_id: u64) -> ManagedVec<UnlinkRequest>
+```
+>Returns a list with all the unlink requests initiated by `child_id`.
 
 <br/>
 
