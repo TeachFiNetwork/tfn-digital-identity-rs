@@ -418,6 +418,12 @@ getMultipleIdentities(identity_ids: ManagedVec<u64>) -> ManagedVec<Identity>
 <br/>
 
 ```rust
+getMultipleIdentitiesByAddresses(addresses: ManagedVec<ManagedAddress>) -> ManagedVec<Identity>
+```
+>Returns a list of all identity objects corresponding to the addresses in the `addresses` list.
+<br/>
+
+```rust
 getLastValueOfKey(identity_id: u64, key: &ManagedBuffer) -> Option<Value>
 ```
 >Returns Some(value) for the last value object recorded under the specified `key` in `identity_id`. If no value exists under key, None is returned.
